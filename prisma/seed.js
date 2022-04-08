@@ -2,12 +2,43 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function seed() {
-    await createCustomer();
+    const customer = await createCustomer();
     const movies = await createMovies();
     const screens = await createScreens();
-    await createScreenings(screens, movies);
-
+    const screenings = await createScreenings(screens, movies);
+    await createTicketAndSeat(customer, screens, screenings)
     process.exit(0);
+}
+//Create both tickets & Seats
+
+async function createTicketAndSeat(customer, screen, screening) {
+
+    const ticket = await prisma.ticket.create({
+        data: {
+            seats: {
+                create: [
+                    {
+                        number: 1,
+                        screen: {
+                            connect: { id: screen[0].id }
+                        }
+                    }
+                ]
+            },
+            screening: {
+                connect: {id: screening[0].id}
+            },
+            customer: {
+                connect: {id: customer.id}
+            },
+        },
+        include: {
+            screening: true,
+            customer: true,
+            seats: true
+        }
+    })
+    console.log('Ticket created', ticket)
 }
 
 async function createCustomer() {
@@ -71,7 +102,7 @@ async function createScreens() {
 
 async function createScreenings(screens, movies) {
     const screeningDate = new Date();
-
+    const screenings = []
     for (const screen of screens) {
         for (let i = 0; i < movies.length; i++) {
             screeningDate.setDate(screeningDate.getDate() + i);
@@ -91,10 +122,11 @@ async function createScreenings(screens, movies) {
                     }
                 }
             });
-
+            screenings.push(screening)
             console.log('Screening created', screening);
         }
     }
+    return screenings
 }
 
 seed()
