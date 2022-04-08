@@ -17,7 +17,8 @@ app.use(express.urlencoded({ extended: true }));
 
 
 // Add your router below
-
+const cinemaRouter = require('./routers/cinema');
+app.use('/', cinemaRouter);
 
 
 

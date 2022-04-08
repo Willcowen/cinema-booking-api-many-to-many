@@ -5,24 +5,27 @@ async function seed() {
     const customer = await createCustomer();
     const movies = await createMovies();
     const screens = await createScreens();
-    const screenings = await createScreenings(screens, movies);
-    await createTicketAndSeat(customer, screens, screenings)
+    await createScreenings(screens, movies);
+    await createTicket(customer, screens, 3)
+    await createTicket(customer, screens, 2)
+    await createTicket(customer, screens, 1)
     process.exit(0);
 }
-//Create both tickets & Seats
 
-async function createTicketAndSeat(customer, screen, screening) {
+async function createTicket(customer, screening, seatNum) {
+
+    const seat = await prisma.seat.findFirst({
+        where: {
+            number: seatNum,
+        }
+
+    })
 
     const ticket = await prisma.ticket.create({
         data: {
             seats: {
-                create: [
-                    {
-                        number: 1,
-                        screen: {
-                            connect: { id: screen[0].id }
-                        }
-                    }
+                connect: [
+                 {id: seat.id}   
                 ]
             },
             screening: {
@@ -82,7 +85,25 @@ async function createMovies() {
 
 async function createScreens() {
     const rawScreens = [
-        { number: 1 }, { number: 2 }
+        {
+          number: 1,
+          seats : {
+            create: [
+              { number :1 },
+              { number :2 },
+              { number :3 }
+            ]
+          }
+        }, 
+        { 
+          number: 2,
+          seats : {
+            create: [
+              { number :1 },
+              { number :2 }
+            ]
+          }
+        }
     ];
 
     const screens = [];
